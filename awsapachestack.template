@@ -1,0 +1,80 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "This template creates an Apache Web server. This is a proof of concept of getting the web server up and running in the cloud.",
+    "Parameters": {
+        "repository": {
+            "Type": "String",
+            "Default": "https://github.com/leaveys/ClonedRepo.git",
+            "Description": "The github repository where you code is stored. Note: this repository must be public."
+        },
+		"KeyName": {
+            "Type": "String",
+            "Default": "test",
+            "Description": "Security Key"
+        },
+		"OpsWorksStackName": {
+            "Type": "String",
+            "Default": "myStack",
+            "Description": "Security Key"
+        },
+		"branch": {
+            "Type": "String",
+            "Default": "master",
+            "Description": "The github repository to use."
+        }
+	},
+	"Resources": {
+		"myStack" : {
+			"Type" : "AWS::OpsWorks::Stack",
+			"Properties" : {
+				"Name" : {"Ref":"OpsWorksStackName"},
+				"ServiceRoleArn" : { "Fn::Join": ["", ["arn:aws:iam::", {"Ref":"AWS::AccountId"}, ":role/aws-opsworks-service-role"]] },
+				"DefaultInstanceProfileArn" : { "Fn::Join": ["", ["arn:aws:iam::", {"Ref":"AWS::AccountId"}, ":instance-profile/aws-opsworks-ec2-role"]] },
+				"DefaultSshKeyName" : {"Ref":"KeyName"},
+				"DefaultOs": "Amazon Linux",
+                "UseCustomCookbooks": true,
+                "CustomCookbooksSource": {
+                    "Type": "git",
+                    "Url": "https://github.com/leaveys/ClonedRepo.git"
+                }
+			}
+		},
+			
+		"myLayer": {
+			"Type": "AWS::OpsWorks::Layer",
+			"Properties": {
+				"StackId": {"Ref": "myStack"},
+					"Name": "Web Server",
+					"Type": "custom",
+					"Shortname" : "apacheserver",
+					"EnableAutoHealing" : "true",
+					"AutoAssignElasticIps" : "false",
+					"AutoAssignPublicIps" : "true",
+					"Name": "Web Apache Layer",
+				"CustomRecipes" : {
+					"Deploy": [
+						"apache2::default"
+					]
+				}
+			}
+		},
+			  
+		"myInstance1" : {
+			"Type" : "AWS::OpsWorks::Instance",
+			"Properties" : {
+				"StackId" : {"Ref":"myStack"},
+				"LayerIds" : [{"Ref":"myLayer"}],
+				"InstanceType" : "m1.small"
+			}
+		}
+		
+	},
+	 "Outputs": {
+        "StackId": {
+            "Value": {
+                "Ref": "myStack"
+            }
+        }
+    }
+	
+}
