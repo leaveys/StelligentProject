@@ -7,7 +7,7 @@
 #Install the Httpd Apache Web Server
 package 'httpd'
 
-#Ensure the Httpd web service is started and enabled
+#Ensure the Httpd web service is started
 service 'httpd' do
 	action :start
 end
